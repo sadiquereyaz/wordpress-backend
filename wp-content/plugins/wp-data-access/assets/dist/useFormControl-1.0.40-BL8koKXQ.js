@@ -1,0 +1,1 @@
+import{r as t}from"./redux-1.0.40-W_04YL6Z.js";function d({props:e,states:f,muiFormControl:o}){return f.reduce((r,n)=>(r[n]=e[n],o&&typeof e[n]>"u"&&(r[n]=o[n]),r),{})}const u=t.createContext(void 0);function x(){return t.useContext(u)}export{u as F,d as f,x as u};

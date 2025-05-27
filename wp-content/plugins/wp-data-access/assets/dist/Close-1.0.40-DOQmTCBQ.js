@@ -1,0 +1,1 @@
+import"./redux-1.0.40-W_04YL6Z.js";import{c as o}from"./createSvgIcon-1.0.40-DryBVjDb.js";import{j as r}from"./cm-1.0.40-DO7MoydR.js";const e=o(r.jsx("path",{d:"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"}),"Close");export{e as C};
