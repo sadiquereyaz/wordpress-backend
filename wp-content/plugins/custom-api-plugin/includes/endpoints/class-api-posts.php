@@ -52,5 +52,6 @@ function post_callback_permission_check()
 {
     // Check if the user has permission to view posts
     //return current_user_can('read'); // This checks if the user can read posts
-    return true;
+    return is_user_logged_in();
+    // return false;
 }

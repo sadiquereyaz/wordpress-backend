@@ -184,6 +184,17 @@ function get_tutor_user_courses(WP_REST_Request $request) {
             'title' => get_the_title($course_id),
             'link' => get_permalink($course_id),
             'thumbnail' => get_the_post_thumbnail_url($course_id),
+			//'excerpt' => $course_post->post_excerpt,
+			'duration' => get_tutor_course_duration_context($course_id),
+			'instructor' => tutor_utils()->get_course_instructor_name($course_id),
+			'progress' => (int) tutor_utils()->get_course_progress($course_id, $user_id),
+			'is_completed' => tutor_utils()->is_completed_course($course_id, $user_id),
+			'enrolled_date' => tutor_utils()->get_course_enroll_date($course_id, $user_id),
+			'lesson_count' => $course_contents->lesson_count ?? 0,
+			'rating' => $rating_data['rating_avg'] ?? 0,
+			'price' => tutor_utils()->get_raw_course_price($course_id),
+			'categories' => wp_get_post_terms($course_id, 'course-category', ['fields' => 'names']),
+			//'categories' => $categories ? wp_list_pluck($categories, 'name') : []
         ];
     }
 
