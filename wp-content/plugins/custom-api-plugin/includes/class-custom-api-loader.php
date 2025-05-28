@@ -13,7 +13,7 @@ class Custom_API_Loader
         require_once $base_path . 'class-api-posts.php';
         require_once $base_path . 'class-api-products.php';
         require_once $base_path . 'class-api-subscribed-courses.php';
-        //require_once $base_path . 'class-api-courses.php';
+        require_once $base_path . 'class-api-courses.php';
 
         // Each file will register its own endpoint
     }
