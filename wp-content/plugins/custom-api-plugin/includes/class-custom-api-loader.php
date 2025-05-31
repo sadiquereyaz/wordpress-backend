@@ -17,6 +17,11 @@ class Custom_API_Loader
         require_once $base_path . 'class-api-course-content.php';
         require_once $base_path . 'class-api-lesson.php';
         require_once $base_path . 'class-api-progress-percent.php';
+        require_once $base_path . 'class-api-test.php';
+        require_once $base_path . 'class-api-course-topic.php';
+        require_once $base_path . 'class-api-lesson-name.php';
+        require_once $base_path . 'class-api-get-post-video.php';
+        require_once $base_path . 'class-api-lesson-mark-complete.php';
 
         // Each file will register its own endpoint
     }

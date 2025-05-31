@@ -869,7 +869,7 @@ class Utils
 	 */
 	/* 
 	If $get_stats is true, it returns detailed stats; otherwise, it returns just the percentage.
-	
+
 	*/
 	public function get_course_completed_percent($course_id = 0, $user_id = 0, $get_stats = false)
 	{
@@ -10185,6 +10185,7 @@ class Utils
 	 *
 	 * @return array
 	 */
+	//
 	private function assign_child_count(array $course_meta, $post_type)
 	{
 		global $wpdb;
@@ -10218,6 +10219,8 @@ class Utils
 	 *
 	 * @return mixed
 	 */
+
+	//Retrieves all quizzes, assignments, lessons, topics, and enrollment counts for given course(s).
 	public function get_course_meta_data($course_id)
 	{
 		global $wpdb;
