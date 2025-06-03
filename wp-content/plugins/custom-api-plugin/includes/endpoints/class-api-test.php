@@ -41,8 +41,8 @@ function get_test($request)
 
     // $result = $utils->course_progress_status_context($course_id, $user_id);
 
-    // $course_id = 83;
-    // $result = $utils->get_course_contents_by_id($course_id);
+    $course_id = 83;
+    $result = $utils->get_course_contents_by_id($course_id);        // IMP: return all the video lessons of a course
 
     // $result = $utils->get_assignments_by_course($course_id);
 
@@ -57,7 +57,7 @@ function get_test($request)
 
     // $result = $utils->get_completed_lesson_count_by_course($course_id = 83, $user_id = 2);
 
-    $result = LessonModel::mark_lesson_complete($lesson_id = 87, $user_id = 2);
+    // $result = LessonModel::mark_lesson_complete($lesson_id = 87, $user_id = 2);
 
     return rest_ensure_response($result);
 }

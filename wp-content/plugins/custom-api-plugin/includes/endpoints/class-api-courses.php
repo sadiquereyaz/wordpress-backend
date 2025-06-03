@@ -33,13 +33,14 @@ function custom_api_get_courses(WP_REST_Request $request)
             'link'        => get_permalink($post),
             'thumbnail'   => get_the_post_thumbnail_url($post->ID, 'medium'),
             'date'        => get_the_date('', $post),
-            'instructor'  => get_post_meta($post->ID, 'instructor_name', true), 
-            'duration'    => get_post_meta($post->ID, 'course_duration', true), 
+            'instructor'  => tutor_utils()->get_course_instructor_name($post->ID), 
+            'duration'    => get_tutor_course_duration_context($post->ID), 
             // 'lesson_count' => count(get_post_meta($post->ID, 'lessons', true)), 
-            'rating'      => get_post_meta($post->ID, 'course_rating', true), 
-            'price'       => get_post_meta($post->ID, 'course_price', true), 
+            // 'rating'      => get_post_meta($post->ID, 'course_rating', true), 
+            // 'price'       => get_post_meta($post->ID, 'course_price', true), 
+            'price' => tutor_utils()->get_raw_course_price($post->ID),
             'categories'  => wp_get_post_terms($post->ID, 'course-category', array('fields' => 'names')), 
-            'tags'        => wp_get_post_terms($post->ID, 'course-tag', array('fields' => 'names')), 
+            // 'tags'        => wp_get_post_terms($post->ID, 'course-tag', array('fields' => 'names')), 
             'content'     => apply_filters('the_content', $post->post_content), // Get the full content of the course
             // 'meta'        => get_post_meta($post->ID), // Get all meta data for the course
             

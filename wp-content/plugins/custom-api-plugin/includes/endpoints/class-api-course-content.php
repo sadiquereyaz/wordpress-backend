@@ -4,9 +4,12 @@
 add_action('rest_api_init', function () {
     register_rest_route('custom/v1', '/course/(?P<id>\d+)', [
         'methods' => 'GET',
-        'callback' => 'get_course_details_by_id',
+        // 'callback' => 'get_tutor_course_lessons',
+        // 'callback' => 'get_course_details_by_id',
+        // 'callback' => 'get_all_course_lessons',    // M-3
+        'callback' => 'get_all_course_lessons_and_video',    // M-4
         'permission_callback' => function () {
-            check_tutor_functions();
+            //check_tutor_functions();
             return is_user_logged_in(); 
         },
     ]);
@@ -28,15 +31,15 @@ function get_course_details_by_id($data)
     //echo "\npost: $course\n";
 
     //$course_meta = tutor_course_meta_info($course_id);
-    $instructor_ids = tutor_utils()->get_course_instructors_ids_by_course($course_id);
-    $instructors = array_map(function ($id) {
+    //$instructor_ids = tutor_utils()->get_course_instructors_ids_by_course($course_id);
+    /* $instructors = array_map(function ($id) {
         $user = get_userdata($id);
         return [
             'id' => $id,
             'name' => $user->display_name,
             'email' => $user->user_email
         ];
-    }, $instructor_ids);
+    }, $instructor_ids); */
 
     $lessons = tutor_utils()->get_course_contents_by_course($course_id);
 
@@ -45,7 +48,7 @@ function get_course_details_by_id($data)
         'title' => $course->post_title,
         'content' => apply_filters('the_content', $course->post_content),
         'excerpt' => get_the_excerpt($course),
-        'instructors' => $instructors,
+        //'instructors' => $instructors,
         //'meta' => $course_meta,
         'lessons' => $lessons,
         'featured_image' => get_the_post_thumbnail_url($course_id, 'full')
@@ -190,12 +193,15 @@ function get_tutor_course_lessons($request) {
     
     // Get course topics
     $topics = tutor_utils()->get_topics($course_id);
-    
+
+
     if ($topics && is_array($topics)) {
         foreach ($topics as $topic) {
             // Get lessons under this topic
             $lessons = tutor_utils()->get_course_contents_by_topic($topic->ID, tutor()->lesson_post_type);
-            
+            //echo "lessons: $lessons\n";
+            //return rest_ensure_response($lessons);
+
             if ($lessons) {
                 foreach ($lessons as $lesson) {
                     $video_url = get_lesson_video_url($lesson->ID);
@@ -255,3 +261,38 @@ function get_tutor_course_lessons($request) {
     return rest_ensure_response($response_data);
 }
 
+
+// M-3
+function get_all_course_lessons($request) {
+    $course_id = $request['id'];
+
+    $utils = tutor_utils();
+    $result = $utils->get_course_contents_by_id($course_id);
+    
+    return rest_ensure_response($result);
+}
+
+
+
+// M-4
+function get_all_course_lessons_and_video($request) {
+    $course_id = $request['id'];
+    $user_id = get_current_user_id();
+
+    $utils = tutor_utils();
+    $result = $utils->get_course_contents_by_id($course_id); // Get all lessons
+
+    // Add video URLs to each lesson
+    foreach ($result as &$lesson) {
+        $video_url = $utils->get_video($lesson->ID);
+        $is_completed = $utils->is_completed_lesson($lesson->ID, $user_id);
+        
+
+        $lesson->video_url = $video_url;
+        //$lesson->is_completed = is_lesson_completed($lesson->ID);
+        $lesson->is_completed = ($is_completed) ? true : false;
+        $lesson->study_materials = get_lesson_study_materials($lesson->ID);
+    }
+
+    return rest_ensure_response($result);
+}
