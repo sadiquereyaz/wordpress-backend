@@ -27,12 +27,18 @@ function mark_lesson_complete($request)
         return new WP_REST_Response(['error' => 'Missing required parameters'], 400);
     }
 
+    // Check if lesson exists
+    $lesson_post = get_post($lesson_id);
+    if (!$lesson_post || $lesson_post->post_type !== 'lesson') {
+        return new WP_REST_Response(['error' => 'Lesson does not exist'], 404);
+    }
+
     $result = LessonModel::mark_lesson_complete($lesson_id, $user_id);
 
     // good response format
     return new WP_REST_Response([
         'status' => 'success',
         'message' => 'Lesson marked as complete',
-        'result' => $result,
+        'result' => $result ?: "Successfully marked lesson as complete",
     ], 200);
 }

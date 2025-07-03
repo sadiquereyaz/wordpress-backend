@@ -22,6 +22,12 @@ function get_video_by_post_id($request)
 {
     $post_id = (int) $request->get_param('post_id');
 
+    printf("Fetching video for post ID: %d\n", $post_id);
+
+    if (!get_post($post_id)) {
+        return new WP_Error('post_not_found', 'Post not found', ['status' => 404]);
+    }
+
     $utils = tutor_utils(); // Or however your code accesses this class
 
     if (!method_exists($utils, 'get_video')) {
@@ -29,6 +35,10 @@ function get_video_by_post_id($request)
     }
 
     $result = $utils->get_video($post_id);
+
+    if (empty($result)) {
+        return new WP_Error('video_not_found', 'No video found for this post', ['status' => 404]);
+    }
 
     return rest_ensure_response($result);
 }

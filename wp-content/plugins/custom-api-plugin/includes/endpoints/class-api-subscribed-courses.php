@@ -32,7 +32,7 @@ function myplugin_get_subscribed_courses_detailed(WP_REST_Request $request)
             'id' => $course_id,
             'title' => get_the_title($course_id),
             'link' => get_permalink($course_id),
-            'thumbnail' => get_the_post_thumbnail_url($course_id),
+            'thumbnail' => get_the_post_thumbnail_url($course_id, 'medium'),
             //'excerpt' => $course_post->post_excerpt,
             'duration' => get_tutor_course_duration_context($course_id),
             'instructor' => tutor_utils()->get_course_instructor_name($course_id),

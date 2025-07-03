@@ -1,6 +1,35 @@
 <?php
 
-
+/**
+ * Registers a custom REST API endpoint for fetching course content in Tutor LMS.
+ *
+ * Endpoint: /wp-json/custom/v1/course/{id}
+ * Method: GET
+ * Callback: get_all_course_lessons_and_video
+ * 
+ * Permission: User must be logged in.
+ *
+ * Functions:
+ * - get_course_details_by_id($data): Returns detailed course information by course ID.
+ * - check_tutor_functions(): Checks availability of key Tutor LMS utility functions.
+ * - tutor_course_lessons_permissions_check($request): Checks if the user is logged in for permission.
+ * - get_lesson_video_url($lesson_id): Retrieves the video URL for a lesson based on its video source.
+ * - is_lesson_completed($lesson_id, $user_id = null): Checks if a lesson is completed by a user.
+ * - get_lesson_study_materials($lesson_id): Retrieves study materials (attachments) for a lesson.
+ * - get_tutor_course_lessons($request): Returns detailed lesson data for a course, including completion and materials.
+ * - get_all_course_lessons($request): Returns all course lessons using Tutor LMS utilities.
+ * - get_all_course_lessons_and_video($request): Returns all course lessons with video URLs, completion status, and study materials.
+ *
+ * Helper functions utilize Tutor LMS utilities for fetching topics, lessons, video URLs, completion status, and attachments.
+ * 
+ * Error Handling:
+ * - Returns WP_Error if course or lessons are not found, or if user is not enrolled.
+ * 
+ * Response Structure:
+ * - Course details, lessons (with video, completion, and materials), and summary statistics.
+ *
+ * @package Custom_API_Plugin
+ */
 add_action('rest_api_init', function () {
     register_rest_route('custom/v1', '/course/(?P<id>\d+)', [
         'methods' => 'GET',
@@ -10,7 +39,7 @@ add_action('rest_api_init', function () {
         'callback' => 'get_all_course_lessons_and_video',    // M-4
         'permission_callback' => function () {
             //check_tutor_functions();
-            return is_user_logged_in(); 
+            return is_user_logged_in();
         },
     ]);
 });
@@ -26,7 +55,6 @@ function get_course_details_by_id($data)
             'message' => 'Invalid course ID.'
         ], 404);
     }
-
     $course = get_post($course_id);
     //echo "\npost: $course\n";
 
@@ -94,18 +122,20 @@ function check_tutor_functions()
 
 
 // Permission callback - modify as needed
-function tutor_course_lessons_permissions_check($request) {
+function tutor_course_lessons_permissions_check($request)
+{
     // Require user to be logged in to check completion status
     return is_user_logged_in();
-    
+
     // Alternative: Allow public access but completion status will be null
     // return true;
 }
 
 // Helper function to get video URL from lesson
-function get_lesson_video_url($lesson_id) {
+function get_lesson_video_url($lesson_id)
+{
     $video_source = get_post_meta($lesson_id, '_video_source', true);
-    
+
     switch ($video_source) {
         case 'youtube':
             return get_post_meta($lesson_id, '_video_source_youtube', true);
@@ -124,17 +154,18 @@ function get_lesson_video_url($lesson_id) {
 }
 
 // Helper function to check if lesson is completed by current user
-function is_lesson_completed($lesson_id, $user_id = null) {
+function is_lesson_completed($lesson_id, $user_id = null)
+{
     if (!$user_id) {
         $user_id = get_current_user_id();
     }
-    
+
     if (!$user_id) {
         return null; // User not logged in
     }
-    
+
     global $wpdb;
-    
+
     $completed = $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$wpdb->usermeta} 
          WHERE user_id = %d 
@@ -142,15 +173,16 @@ function is_lesson_completed($lesson_id, $user_id = null) {
         $user_id,
         $lesson_id
     ));
-    
+
     return $completed > 0;
 }
 
 // Helper function to get study materials (attachments) for a lesson
-function get_lesson_study_materials($lesson_id) {
+function get_lesson_study_materials($lesson_id)
+{
     $attachments = tutor_utils()->get_attachments($lesson_id);
     $materials = array();
-    
+
     if ($attachments && is_array($attachments)) {
         foreach ($attachments as $attachment) {
             $materials[] = array(
@@ -163,34 +195,35 @@ function get_lesson_study_materials($lesson_id) {
             );
         }
     }
-    
+
     return $materials;
 }
 
 // Main callback function to fetch course lessons
-function get_tutor_course_lessons($request) {
+function get_tutor_course_lessons($request)
+{
     $course_id = $request['id'];
     $user_id = get_current_user_id();
-    
+
     // Check if the course exists and is published
     $course = get_post($course_id);
-    
+
     if (!$course || $course->post_type !== 'courses' || $course->post_status !== 'publish') {
         return new WP_Error('course_not_found', 'Course not found', array('status' => 404));
     }
-    
+
     // Check if user is enrolled (optional - remove if not needed)
     if ($user_id && !tutor_utils()->is_enrolled($course_id, $user_id)) {
         return new WP_Error('not_enrolled', 'User is not enrolled in this course', array('status' => 403));
     }
-    
+
     $response_data = array(
         'course_id' => $course_id,
         'course_title' => $course->post_title,
         'lessons' => array(),
         'study_materials' => array()
     );
-    
+
     // Get course topics
     $topics = tutor_utils()->get_topics($course_id);
 
@@ -207,7 +240,7 @@ function get_tutor_course_lessons($request) {
                     $video_url = get_lesson_video_url($lesson->ID);
                     $is_completed = is_lesson_completed($lesson->ID, $user_id);
                     $study_materials = get_lesson_study_materials($lesson->ID);
-                    
+
                     $lesson_data = array(
                         'lesson_id' => $lesson->ID,
                         'lesson_name' => $lesson->post_title,
@@ -220,9 +253,9 @@ function get_tutor_course_lessons($request) {
                         'is_preview' => get_post_meta($lesson->ID, '_is_preview', true) === 'yes',
                         'study_materials' => $study_materials
                     );
-                    
+
                     $response_data['lessons'][] = $lesson_data;
-                    
+
                     // Add study materials to main array if they exist
                     if (!empty($study_materials)) {
                         foreach ($study_materials as $material) {
@@ -235,61 +268,101 @@ function get_tutor_course_lessons($request) {
             }
         }
     }
-    
+
     // Sort lessons by topic and lesson order
-    usort($response_data['lessons'], function($a, $b) {
+    usort($response_data['lessons'], function ($a, $b) {
         if ($a['topic_id'] == $b['topic_id']) {
             return intval($a['lesson_order']) - intval($b['lesson_order']);
         }
         return $a['topic_id'] - $b['topic_id'];
     });
-    
+
     // Add summary statistics
     $response_data['summary'] = array(
         'total_lessons' => count($response_data['lessons']),
-        'completed_lessons' => count(array_filter($response_data['lessons'], function($lesson) {
+        'completed_lessons' => count(array_filter($response_data['lessons'], function ($lesson) {
             return $lesson['is_completed'] === true;
         })),
         'total_study_materials' => count($response_data['study_materials']),
-        'completion_percentage' => count($response_data['lessons']) > 0 
-            ? round((count(array_filter($response_data['lessons'], function($lesson) {
+        'completion_percentage' => count($response_data['lessons']) > 0
+            ? round((count(array_filter($response_data['lessons'], function ($lesson) {
                 return $lesson['is_completed'] === true;
-            })) / count($response_data['lessons'])) * 100, 2) 
+            })) / count($response_data['lessons'])) * 100, 2)
             : 0
     );
-    
+
     return rest_ensure_response($response_data);
 }
 
 
 // M-3
-function get_all_course_lessons($request) {
+function get_all_course_lessons($request)
+{
     $course_id = $request['id'];
 
     $utils = tutor_utils();
     $result = $utils->get_course_contents_by_id($course_id);
-    
+
     return rest_ensure_response($result);
 }
 
 
 
 // M-4
-function get_all_course_lessons_and_video($request) {
+function get_all_course_lessons_and_video($request)
+{
     $course_id = $request['id'];
     $user_id = get_current_user_id();
 
     $utils = tutor_utils();
     $result = $utils->get_course_contents_by_id($course_id); // Get all lessons
 
+    if (empty($result)) {
+        return new WP_Error('no_lessons_found', 'No lessons found for this course.', array('status' => 404));
+    }
+    
     // Add video URLs to each lesson
     foreach ($result as &$lesson) {
+
         $video_url = $utils->get_video($lesson->ID);
         $is_completed = $utils->is_completed_lesson($lesson->ID, $user_id);
-        
 
-        $lesson->video_url = $video_url;
-        //$lesson->is_completed = is_lesson_completed($lesson->ID);
+        $video_id = null;
+        $source_url = null;
+        $youtube_link = null;
+
+        if (is_array($video_url) && !empty($video_url['source'])) {
+
+            if (isset($video_url['source_youtube'])) {
+                $youtube_link = $video_url['source_youtube'];
+            } else if (isset($video_url['source_vimeo'])) {
+                $youtube_link = $video_url['source_vimeo'];
+            } else if (isset($video_url['source_html5'])) {
+                $youtube_link = $video_url['source_html5'];
+            } else if (isset($video_url['source_external_url'])) {
+                print_r("video_url has source_external_url\n");
+                $youtube_link = $video_url['source_external_url'];
+                print_r("youtube_link: $youtube_link\n");
+            } else if (isset($video_url['source_embedded'])) {
+                $youtube_link = $video_url['source_embedded'];
+            } else {
+                // print_r("video_url does not have source_youtube\n");
+            }
+
+            // Attempt to extract YouTube video ID if source is YouTube
+            if (isset($youtube_link)) {
+                $video_id = $utils->get_youtube_video_id($youtube_link);
+            } else {
+                // print_r("youtube_link is not set\n");
+            }
+        } else {
+            // If video_url is not an array, assume it's a direct URL
+            // print_r("video_url is not an array: $video_url\n");
+        }
+
+        $lesson->youtube_link = $youtube_link;
+        $lesson->youtube_video_id = $video_id;
+        //$lesson->video_url = $video_url;
         $lesson->is_completed = ($is_completed) ? true : false;
         $lesson->study_materials = get_lesson_study_materials($lesson->ID);
     }
