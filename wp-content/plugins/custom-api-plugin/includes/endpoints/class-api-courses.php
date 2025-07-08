@@ -55,18 +55,25 @@ function custom_api_get_courses(WP_REST_Request $request)
     $courses = [];
 
     foreach ($query->posts as $post) {
+        $thumbnail_id = get_post_thumbnail_id($post->ID);
+        $thumbnail_url = null;
+        if ($thumbnail_id) {
+            $thumbnail_url = wp_get_attachment_url($thumbnail_id);
+        }
         $courses[] = array(
             'id'          => $post->ID,
             'title'       => get_the_title($post),
             'excerpt'     => get_the_excerpt($post),
             'link'        => get_permalink($post),
-            'thumbnail'   => get_the_post_thumbnail_url($post->ID, 'medium'),
+            'cover_url'   => $thumbnail_url,
+            'thumbnail_resized'   => get_the_post_thumbnail_url($post->ID, 'medium'),
             'date'        => get_the_date('', $post),
             'instructor'  => tutor_utils()->get_course_instructor_name($post->ID),
             'duration'    => get_tutor_course_duration_context($post->ID),
             'price'       => tutor_utils()->get_raw_course_price($post->ID),
             'categories'  => wp_get_post_terms($post->ID, 'course-category', array('fields' => 'names')),
-            'content' => wp_strip_all_tags(apply_filters('the_content', $post->post_content)),
+            // 'content' => wp_strip_all_tags(apply_filters('the_content', $post->post_content)),
+            'content' => apply_filters('the_content', $post->post_content),
         );
     }
 
